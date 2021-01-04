@@ -5,6 +5,7 @@ using Microsoft.ML.Data;
 using System;
 using System.IO;
 using System.Linq;
+using static Microsoft.ML.DataOperationsCatalog;
 
 namespace FraudDetection
 {
@@ -119,15 +120,53 @@ namespace FraudDetection
                 j++;
 
                 if (j > 10) { break; }
-                {
-
-                }
             }
         }
 
         private static void PrepDatasets(MLContext mlContext, string fullDatasetPath, string trainDatasetPath, string testDatasetPath)
         {
-            throw new NotImplementedException();
+            if (!File.Exists(trainDatasetPath) && !File.Exists(testDatasetPath))
+            {
+                Console.WriteLine("=====Preparing the train & test Data=====");
+
+                IDataView origFullData = mlContext.Data.LoadFromTextFile<TransactionData>(fullDatasetPath, separatorChar: ',', hasHeader: true);
+
+                TrainTestData trainTestData = mlContext.Data.TrainTestSplit(origFullData, testFraction: 0.2);
+                IDataView trainData = trainTestData.TrainSet;
+                IDataView testData = trainTestData.TestSet;
+
+                InspectData(mlContext, testData, 4);
+
+                using (var fileStream = File.Create(trainDatasetPath))
+                {
+                    mlContext.Data.SaveAsText(trainData, fileStream, separatorChar: ',', headerRow: true, schema: true);
+                }
+
+                using (var fileStream = File.Create(testDatasetPath))
+                {
+                    mlContext.Data.SaveAsText(testData, fileStream, separatorChar: ',', headerRow: true, schema: true);
+                }
+            }
+        }
+
+        private static void InspectData(MLContext mlContext, IDataView data, int records)
+        {
+            Console.WriteLine($"Show {records} Fraud Transactions (true)");
+            ShowObservationsFilteredByLabel(mlContext, data, label: false, count: records);
+
+            Console.WriteLine($"Show {records} NON-Fraud Transactions (false)");
+            ShowObservationsFilteredByLabel(mlContext, data, label: true, count: records);
+            
+        }
+
+        private static void ShowObservationsFilteredByLabel(MLContext mlContext, IDataView dataView, bool label = true, int count = 2)
+        {
+            var data = mlContext.Data.CreateEnumerable<TransactionData>(dataView, reuseRowObject: false)
+                .Where(x => x.IsFraud == label)
+                .Take(count)
+                .ToList();
+
+            data.ForEach(row => { row.PrintToConsole(); });
         }
 
         private static void UnZipDataset(string zipDataset, string fullDatasetPath)
