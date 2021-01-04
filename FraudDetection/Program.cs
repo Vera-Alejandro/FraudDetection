@@ -4,6 +4,7 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using static Microsoft.ML.DataOperationsCatalog;
 
@@ -169,14 +170,23 @@ namespace FraudDetection
             data.ForEach(row => { row.PrintToConsole(); });
         }
 
-        private static void UnZipDataset(string zipDataset, string fullDatasetPath)
+        private static void UnZipDataset(string zipDataset, string destinationFile)
         {
-            throw new NotImplementedException();
+            if (!File.Exists(destinationFile))
+            {
+                string destinationDir = Path.GetDirectoryName(destinationFile);
+                ZipFile.ExtractToDirectory(zipDataset, $"{destinationDir}");
+            }
         }
 
-        private static string GetAbsolutePath(string assetRelativePath)
+        private static string GetAbsolutePath(string relativePath)
         {
-            throw new NotImplementedException();
+            FileInfo _dataRoot = new FileInfo(typeof(Program).Assembly.Location);
+            string assemblyFolderPath = _dataRoot.Directory.FullName;
+
+            string fullPath = Path.Combine(assemblyFolderPath, relativePath);
+
+            return fullPath;
         }
     }
 }
