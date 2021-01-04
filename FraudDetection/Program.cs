@@ -1,4 +1,5 @@
-﻿using Microsoft.ML;
+﻿using Common;
+using Microsoft.ML;
 using System;
 using System.IO;
 
@@ -37,12 +38,22 @@ namespace FraudDetection
 
         private static void SaveModel(MLContext mlContext, ITransformer model, string modelPath, DataViewSchema schema)
         {
-            throw new NotImplementedException();
+            ConsoleHelper.ConsoleWriteHeader("===============Saving Model===============");
+
+            mlContext.Model.Save(model, schema, modelPath);
+
+            Console.WriteLine($"Saved model to {modelPath}");
         }
 
         private static void EvaluateModel(MLContext mlContext, ITransformer model, IDataView testDataView, string trainerName)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("===== Evaluating Model's accuracy with Test data =====");
+
+            var predictions = model.Transform(testDataView);
+
+            var metrics = mlContext.BinaryClassification.Evaluate(data: predictions,
+                                                                    labelColumnName: nameof(TransactionData.IsFraud),
+                                                                    scoreColumnName: "Score");
         }
 
         private static (ITransformer model, string trainerName) TrainModel(MLContext mlContext, IDataView trainingDataView)
