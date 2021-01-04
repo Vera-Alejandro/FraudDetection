@@ -22,6 +22,12 @@ namespace FraudDetection
             string testDatasetPath = Path.Combine(assetPath, "output", "testData.csv");
             string modelPath = Path.Combine(assetPath, "output", "model.zip");
 
+            if (!File.Exists(zipDataset)) 
+            {
+                Console.WriteLine("Ziped Dataset not found... Place Dataset in input folder");
+                return;
+            }
+
             UnZipDataset(zipDataset, fullDatasetPath);
 
             MLContext mlContext = new MLContext();
@@ -153,10 +159,10 @@ namespace FraudDetection
         private static void InspectData(MLContext mlContext, IDataView data, int records)
         {
             Console.WriteLine($"Show {records} Fraud Transactions (true)");
-            ShowObservationsFilteredByLabel(mlContext, data, label: false, count: records);
+            ShowObservationsFilteredByLabel(mlContext, data, label: true, count: records);
 
             Console.WriteLine($"Show {records} NON-Fraud Transactions (false)");
-            ShowObservationsFilteredByLabel(mlContext, data, label: true, count: records);
+            ShowObservationsFilteredByLabel(mlContext, data, label: false, count: records);
             
         }
 
